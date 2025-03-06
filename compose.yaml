@@ -1,0 +1,32 @@
+services:
+  artemis:
+    image: apache/activemq-artemis:latest-alpine
+    ports:
+      - 127.0.0.1:8161:8161
+      - 127.0.0.1:61613:61613
+  
+  kafka:
+    build: kafka
+    healthcheck:
+      test: /opt/kafka/bin/kafka-cluster.sh cluster-id --bootstrap-server kafka:9092 || exit 1
+      interval: 1s
+      timeout: 60s
+      retries: 60
+
+  kafka-debug-consumer:
+    image: apache/kafka
+    command: ["/opt/kafka/bin/kafka-console-consumer.sh", "--topic", "alerts", "--bootstrap-server", "kafka:9092"]
+    depends_on:
+      kafka : 
+        condition: service_healthy
+  
+  kafka-connect:
+    image: apache/kafka
+    command: ["/opt/kafka/bin/connect-standalone.sh", "/opt/kafka/config/custom/connect-config.properties", "/opt/kafka/config/custom/source-connector.properties"]
+    volumes:
+      - ./kafka-configs/source-connector.properties:/opt/kafka/config/custom/source-connector.properties
+      - ./kafka-configs/connect-config.properties:/opt/kafka/config/custom/connect-config.properties
+      - ./target/stomp-connector-for-kafka-1.0-SNAPSHOT.jar:/opt/connectors/connector.jar
+    depends_on:
+      kafka : 
+        condition: service_healthy
