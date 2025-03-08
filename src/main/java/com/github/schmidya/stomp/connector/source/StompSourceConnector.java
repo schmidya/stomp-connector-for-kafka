@@ -1,4 +1,4 @@
-package com.github.schmidya.connector.stomp;
+package com.github.schmidya.stomp.connector.source;
 
 import java.util.ArrayList;
 import java.util.List;
