@@ -17,10 +17,17 @@ public abstract class StompServerFrame extends StompFrame {
     }
 
     public static StompServerFrame fromString(String s){
+
         Object[] lines = s.lines().toArray();
         Map<String,String> headers = new HashMap<>();
-        String command = (String)lines[0];
-        int idx = 1;
+        int idx = 0;
+        String command = "";
+        
+        while (idx<lines.length){
+            command = (String)lines[idx++];
+            if (command.length()>0) break;
+        }
+
         while (idx<lines.length) {
             String headerLine = (String)lines[idx++];
             if (headerLine.equals("")) break;

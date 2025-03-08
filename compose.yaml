@@ -27,7 +27,7 @@ services:
 
   kafka-debug-consumer:
     image: docker.io/apache/kafka
-    command: ["/opt/kafka/bin/kafka-console-consumer.sh", "--topic", "alerts", "--bootstrap-server", "kafka:9092"]
+    command: ["/opt/kafka/bin/kafka-console-consumer.sh", "--topic", "helloworld", "--bootstrap-server", "kafka:9092"]
     depends_on:
       kafka : 
         condition: service_healthy

@@ -8,5 +8,9 @@ public class StompMessageFrame extends StompServerFrame {
         super(CMD_MESSAGE, headers, body);
         //TODO Auto-generated constructor stub
     }
+
+    public String getBody(){
+        return body;
+    }
     
 }
