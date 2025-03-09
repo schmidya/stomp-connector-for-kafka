@@ -12,5 +12,9 @@ public class StompMessageFrame extends StompServerFrame {
     public String getBody(){
         return body;
     }
+
+    public String getAckId(){
+        return headers.get("ack");
+    }
     
 }
