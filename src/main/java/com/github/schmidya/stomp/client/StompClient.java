@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,18 +25,22 @@ public class StompClient {
     private String hostname;
     private int port;
     private Socket sk;
-    private Deque<StompServerFrame> frames;
-    private String incompleteFrame;
+    private ConcurrentLinkedQueue<StompServerFrame> frames;
+    Thread listenerThread;
 
     public StompClient(String hostname, int port){
         this.hostname=hostname;
         this.port=port;
-        this.frames=new LinkedList<StompServerFrame>();
+        frames = new ConcurrentLinkedQueue<>();
     }
 
     public StompConnectedFrame connect(String login, String passcode) throws IOException {
         sk = new Socket(hostname,port);
-        
+
+        StompListener ls = new StompListener(sk.getInputStream(), frames);
+        listenerThread = new Thread(ls);
+        listenerThread.start();
+
         if (sk.isConnected()){
             sk.getOutputStream().write(new StompConnectFrame(hostname+":"+Integer.toString(port), login, passcode).toString().getBytes());
             StompServerFrame frame = getNextFrame();
@@ -63,34 +68,23 @@ public class StompClient {
         return null;
     }
 
-    public StompMessageFrame poll() throws IOException{
-        while (true) {
-            StompServerFrame f = getNextFrame();
-            if (f instanceof StompMessageFrame m) {
-                return m;
-            }
-        }
-
-    }
-    
-    private void listen() throws IOException{
-        String frame = "";
-        log.error("Listening on socket");
-        while (true){
-            int read = sk.getInputStream().read();
-            if (read < 0) continue;
-            byte b = (byte)read;
-            if (b==0) break;
-            frame += (char)b;
-        }
-        log.error(frame);
-        
-        frames.add(StompServerFrame.fromString(frame));
+    public List<StompMessageFrame> poll(){
+        List<StompMessageFrame> ret = new ArrayList<>();
+        StompServerFrame f = null;
+        do {
+            f = frames.poll();
+            if (f instanceof StompMessageFrame m) ret.add(m);
+            // TODO: treat ERROR frames etc.
+        } while (f!=null);
+        return ret;
     }
 
-    public StompServerFrame getNextFrame() throws IOException{
-        while (frames.peekFirst()==null) listen();
-        return frames.pop();
+    public StompServerFrame getNextFrame() {
+        StompServerFrame ret = null;
+        do {
+            ret = frames.poll();
+        } while (ret==null); 
+        return ret;
     }
 
 }

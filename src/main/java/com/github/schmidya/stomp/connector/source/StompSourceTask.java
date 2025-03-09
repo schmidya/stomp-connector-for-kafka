@@ -52,22 +52,18 @@ public class StompSourceTask extends SourceTask {
 
     @Override
     public List<SourceRecord> poll() throws InterruptedException {
-        try {
-            StompMessageFrame m = client.poll();
-            String message = m.getBody();
-            List<SourceRecord> ret = new ArrayList<SourceRecord>();
+        List<SourceRecord> ret = new ArrayList<SourceRecord>();
+        List<StompMessageFrame> msgs = client.poll();
+        for (StompMessageFrame msg : msgs){
             ret.add(new SourceRecord(
                 Collections.singletonMap("topic", config.getString(StompSourceConnector.TOPIC_CONFIG)), 
                 Collections.singletonMap("message_count", 1), 
                 config.getString("topic"), 
                 Schema.STRING_SCHEMA,
-                message 
+                msg.getBody() 
                 ));
-            return ret;
-        } catch (IOException e){
-            log.error(e.toString());
         }
-        return null;
+        return ret;
     }
 
     @Override
