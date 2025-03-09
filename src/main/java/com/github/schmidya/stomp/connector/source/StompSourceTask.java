@@ -11,6 +11,8 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.kafka.common.config.AbstractConfig;
 import org.apache.kafka.connect.data.Schema;
+import org.apache.kafka.connect.data.SchemaBuilder;
+import org.apache.kafka.connect.data.Struct;
 import org.apache.kafka.connect.source.SourceRecord;
 import org.apache.kafka.connect.source.SourceTask;
 import org.slf4j.Logger;
@@ -55,12 +57,13 @@ public class StompSourceTask extends SourceTask {
         List<SourceRecord> ret = new ArrayList<SourceRecord>();
         List<StompMessageFrame> msgs = client.poll();
         for (StompMessageFrame msg : msgs){
+            JsonRecord r = new JsonRecord(msg.getBody());
             ret.add(new SourceRecord(
                 Collections.singletonMap("topic", config.getString(StompSourceConnector.TOPIC_CONFIG)), 
                 Collections.singletonMap("message_count", 1), 
                 config.getString("topic"), 
-                Schema.STRING_SCHEMA,
-                msg.getBody() 
+                r.getSchema(),
+                r.getValue()
                 ));
         }
         return ret;
