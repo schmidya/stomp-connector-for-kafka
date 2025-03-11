@@ -15,10 +15,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.schmidya.stomp.client.frames.StompAckFrame;
+import com.github.schmidya.stomp.client.frames.StompClientFrame;
 import com.github.schmidya.stomp.client.frames.StompConnectFrame;
 import com.github.schmidya.stomp.client.frames.StompConnectedFrame;
 import com.github.schmidya.stomp.client.frames.StompMessageFrame;
 import com.github.schmidya.stomp.client.frames.StompReceiptFrame;
+import com.github.schmidya.stomp.client.frames.StompSendFrame;
 import com.github.schmidya.stomp.client.frames.StompServerFrame;
 import com.github.schmidya.stomp.client.frames.StompSubscribeFrame;
 
@@ -38,6 +40,19 @@ public class StompClient {
         this.port=port;
         frames = new ConcurrentLinkedQueue<>();
         ack_frames = new LinkedBlockingDeque<>();
+    }
+
+    public void write(StompClientFrame frame){
+        // TODO: place to check connection health
+        try {
+            sk.getOutputStream().write(frame.toString().getBytes());
+        } catch (IOException e){
+
+        }
+    }
+
+    public void sendMessage(String message, String destination){
+        write(new StompSendFrame(message, destination, "text/plain"));
     }
 
     public StompConnectedFrame connect(String login, String passcode) throws IOException {

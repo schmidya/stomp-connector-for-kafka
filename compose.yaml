@@ -11,8 +11,15 @@ services:
       retries: 60
 
   stomp-producer:
-    build: stomp-producer
-    volumes: ./stomp-producer/main.py:/home/app/main.py:z
+    build: stomp-client
+    volumes: ./stomp-client/producer.py:/home/app/main.py:z
+    depends_on:
+      artemis:
+        condition: service_healthy
+
+  stomp-consumer:
+    build: stomp-client
+    volumes: ./stomp-client/consumer.py:/home/app/main.py:z
     depends_on:
       artemis:
         condition: service_healthy
@@ -34,11 +41,14 @@ services:
   
   kafka-connect:
     image: docker.io/apache/kafka
-    command: ["/opt/kafka/bin/connect-standalone.sh", "/opt/kafka/config/custom/connect-config.properties", "/opt/kafka/config/custom/source-connector.properties"]
+    command: ["/opt/kafka/bin/connect-standalone.sh", "/opt/kafka/config/custom/connect-config.properties", "/opt/kafka/config/custom/source-connector.properties", "/opt/kafka/config/custom/sink-connector.properties"]
     volumes:
       - ./kafka-configs/source-connector.properties:/opt/kafka/config/custom/source-connector.properties:z
+      - ./kafka-configs/sink-connector.properties:/opt/kafka/config/custom/sink-connector.properties:z
       - ./kafka-configs/connect-config.properties:/opt/kafka/config/custom/connect-config.properties:z
       - ./target/stomp-connector-for-kafka-1.0-SNAPSHOT.jar:/opt/connectors/connector.jar:z
     depends_on:
       kafka : 
+        condition: service_healthy
+      artemis:
         condition: service_healthy
