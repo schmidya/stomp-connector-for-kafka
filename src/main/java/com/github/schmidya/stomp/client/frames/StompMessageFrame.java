@@ -6,15 +6,15 @@ public class StompMessageFrame extends StompServerFrame {
 
     protected StompMessageFrame(Map<String, String> headers, String body) {
         super(CMD_MESSAGE, headers, body);
-        //TODO Auto-generated constructor stub
+        // TODO Auto-generated constructor stub
     }
 
-    public String getBody(){
+    public String getBody() {
         return body;
     }
 
-    public String getAckId(){
+    public String getAckId() {
         return headers.get("ack");
     }
-    
+
 }

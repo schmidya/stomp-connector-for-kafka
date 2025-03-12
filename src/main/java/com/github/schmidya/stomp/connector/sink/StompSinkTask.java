@@ -15,7 +15,7 @@ import com.github.schmidya.stomp.client.frames.StompServerFrame;
 
 public class StompSinkTask extends SinkTask {
     private static final Logger log = LoggerFactory.getLogger(StompSinkTask.class);
- 
+
     private StompClient client;
     private AbstractConfig config;
 
@@ -28,7 +28,8 @@ public class StompSinkTask extends SinkTask {
     public void start(Map<String, String> props) {
         config = new AbstractConfig(StompSinkConnector.CONFIG_DEF, props);
         log.error("HELLO KAFKA");
-        client = new StompClient(config.getString(StompSinkConnector.STOMP_BROKER_HOST_CONFIG), config.getInt(StompSinkConnector.STOMP_BROKER_PORT_CONFIG));
+        client = new StompClient(config.getString(StompSinkConnector.STOMP_BROKER_HOST_CONFIG),
+                config.getInt(StompSinkConnector.STOMP_BROKER_PORT_CONFIG));
         log.error("CREATED CLIENT");
         try {
             log.error("CLIENT ATTEMPTING TO CONNECT");
@@ -41,13 +42,15 @@ public class StompSinkTask extends SinkTask {
 
     @Override
     public void put(Collection<SinkRecord> records) {
-        client.sendMessage("{\"Hello\":42}", config.getString(StompSinkConnector.STOMP_DEST_CONFIG));
-        log.error(client.getNextFrame().toString());
+        for (SinkRecord record : records) {
+            client.sendMessage(record.value().toString(), config.getString(StompSinkConnector.STOMP_DEST_CONFIG));
+
+        }
     }
 
     @Override
     public void stop() {
-        
+
     }
-    
+
 }

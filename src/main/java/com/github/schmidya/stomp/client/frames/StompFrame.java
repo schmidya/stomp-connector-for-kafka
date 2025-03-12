@@ -4,16 +4,16 @@ import java.util.Map;
 
 public abstract class StompFrame {
     String command;
-    Map<String,String> headers;
+    Map<String, String> headers;
     String body;
-    
-    protected StompFrame(String command, Map<String,String> headers, String body){
-        this.command=command;
-        this.headers=headers;
-        this.body=body;
+
+    protected StompFrame(String command, Map<String, String> headers, String body) {
+        this.command = command;
+        this.headers = headers;
+        this.body = body;
     }
 
-    protected StompFrame(String command, Map<String,String> headers){
+    protected StompFrame(String command, Map<String, String> headers) {
         this(command, headers, "");
     }
 
@@ -21,7 +21,7 @@ public abstract class StompFrame {
         String frame = "";
         frame += command;
         frame += "\n";
-        for (String header : headers.keySet()){
+        for (String header : headers.keySet()) {
             frame += header;
             frame += ":";
             frame += headers.get(header);
@@ -30,6 +30,6 @@ public abstract class StompFrame {
         frame += "\n";
         frame += body;
         frame += "\0";
-    	return frame;
+        return frame;
     }
 }

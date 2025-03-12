@@ -6,7 +6,7 @@ public class StompConnectedFrame extends StompServerFrame {
 
     protected StompConnectedFrame(Map<String, String> headers) {
         super(CMD_CONNECTED, headers, "");
-        //TODO Auto-generated constructor stub
+        // TODO Auto-generated constructor stub
     }
-    
+
 }

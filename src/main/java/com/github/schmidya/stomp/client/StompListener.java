@@ -15,7 +15,7 @@ public class StompListener implements Runnable {
     InputStream is;
     ConcurrentLinkedQueue<StompServerFrame> Q;
 
-    public StompListener(InputStream is, ConcurrentLinkedQueue<StompServerFrame> Q){
+    public StompListener(InputStream is, ConcurrentLinkedQueue<StompServerFrame> Q) {
         this.is = is;
         this.Q = Q;
     }
@@ -24,23 +24,24 @@ public class StompListener implements Runnable {
     public void run() {
         String frame = "";
         int read = -1;
-        while (true){
-            try{
+        while (true) {
+            try {
                 read = is.read();
-            } catch (IOException e){
+            } catch (IOException e) {
                 log.error(e.toString());
                 log.error("Listener exiting");
                 return;
             }
-            if (read < 0) continue;
-            byte b = (byte)read;
-            if (b==0) {
+            if (read < 0)
+                continue;
+            byte b = (byte) read;
+            if (b == 0) {
                 Q.add(StompServerFrame.fromString(frame));
                 frame = "";
             } else {
-                frame += (char)b;
+                frame += (char) b;
             }
         }
     }
-    
+
 }

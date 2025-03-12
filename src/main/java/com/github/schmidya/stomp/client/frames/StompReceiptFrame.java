@@ -6,7 +6,7 @@ public class StompReceiptFrame extends StompServerFrame {
 
     protected StompReceiptFrame(Map<String, String> headers) {
         super(CMD_RECEIPT, headers, "");
-        //TODO Auto-generated constructor stub
+        // TODO Auto-generated constructor stub
     }
-    
+
 }

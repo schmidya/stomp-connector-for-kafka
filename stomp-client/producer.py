@@ -10,7 +10,12 @@ counter = 0
 while True:
     message = {
         "Hello" : "World",
-        "Count" : counter
+        "Count" : counter,
+        "info" : {
+            "weather" : 24.0,
+            "coffee" : "good",
+            "status" : 42
+        }
     }
     connection.send(body=json.dumps(message), destination='/topic/hello')
     time.sleep(1)

@@ -1,70 +1,81 @@
 package com.github.schmidya.stomp.connector.source;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.data.SchemaBuilder;
 import org.apache.kafka.connect.data.Struct;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class JsonRecord {
-    private Schema schema;
-    private Object value;
+    private static final Logger log = LoggerFactory.getLogger(JsonRecord.class);
+    Schema schema;
+    Object value;
 
-    public JsonRecord(String serializedJson){
+    public static Struct structFromMap(Map<String, Object> omap) {
+        SchemaBuilder bld = SchemaBuilder.struct();
+        for (String key : omap.keySet()) {
+            Object v = omap.get(key);
+            if (v instanceof String s) {
+                bld.field(key, Schema.STRING_SCHEMA);
+            } else if (v instanceof Integer i) {
+                bld.field(key, Schema.INT32_SCHEMA);
+            } else if (v instanceof BigDecimal d) {
+                omap.put(key, d.floatValue());
+                bld.field(key, Schema.FLOAT32_SCHEMA);
+            } else if (v instanceof Map smap) {
+                @SuppressWarnings("unchecked")
+                Struct sstruct = structFromMap(smap);
+                omap.put(key, sstruct);
+                bld.field(key, sstruct.schema());
+            } else {
+                log.error("Unable to build schema for field " + key + " with value of type " + v.getClass() + ":\n"
+                        + v.toString());
+                omap.remove(key);
+            }
+        }
+        Schema schema = bld.build();
+        Struct struct = new Struct(schema);
+        for (String key : omap.keySet()) {
+            struct.put(key, omap.get(key));
+        }
+        return struct;
+    }
+
+    public JsonRecord(String serializedJson) {
         int abrIdx = serializedJson.indexOf('[');
         int sbrIdx = serializedJson.indexOf('{');
-        if (abrIdx < 0 & sbrIdx < 0){
-            // simple value
-            if (NumberUtils.isParsable(serializedJson)){
-                // just use Double for now
-                schema = SchemaBuilder.float64().build();
-                value = Double.parseDouble(serializedJson);
-            } else {
-                // string
-                schema = SchemaBuilder.string().build();
-                value = serializedJson;
-            }
-        } else if (abrIdx < 0 || sbrIdx < abrIdx){
+        if (sbrIdx == 0) {
             // struct
             JSONObject obj = new JSONObject(serializedJson);
-            Map<String, Object> omap = obj.toMap();
-            SchemaBuilder bld = SchemaBuilder.struct();
-            for (String key : omap.keySet()) {
-                Object v = omap.get(key);
-                if (v instanceof String s){
-                    bld.field(key, Schema.STRING_SCHEMA);
-                } else if (v instanceof Integer i){
-                    bld.field(key, Schema.INT32_SCHEMA);
-                } else if (v instanceof Double d){
-                    bld.field(key, Schema.FLOAT64_SCHEMA);
-                } //TODO: nested types
-            }
-            schema = bld.build();
-            Struct struct = new Struct(schema);
-            for (String key : omap.keySet()) {
-                Object v = omap.get(key);
-                if (v instanceof String s){
-                    struct.put(key, s);
-                } else if (v instanceof Integer i){
-                    struct.put(key, i);
-                } else if (v instanceof Double d){
-                    struct.put(key, d);
-                }
-            } 
-            value = struct;
-        } else if (abrIdx > 0){
+            Struct s = structFromMap(obj.toMap());
+            value = s;
+            schema = s.schema();
+        } else if (abrIdx == 0) {
+            // TODO
             // array
-            JSONArray arr = new JSONArray(serializedJson);
-            List<Object> l = arr.toList();
-            //TODO
+            throw new NotImplementedException("Support for json Arrays not yet implemented!");
+            // JSONArray arr = new JSONArray(serializedJson);
+            // List<Object> l = arr.toList();
+        } else {
+            schema = SchemaBuilder.string().build();
+            value = serializedJson;
         }
     }
 
-    public Object getValue(){ return value; }
-    public Schema getSchema(){ return schema; }
+    public Object getValue() {
+        return value;
+    }
+
+    public Schema getSchema() {
+        return schema;
+    }
 
 }

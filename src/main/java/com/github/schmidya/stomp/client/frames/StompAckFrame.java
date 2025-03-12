@@ -5,7 +5,7 @@ import java.util.Map;
 public class StompAckFrame extends StompClientFrame {
 
     public StompAckFrame(String ackId) {
-        super(CMD_ACK, Map.of("id",ackId));
+        super(CMD_ACK, Map.of("id", ackId));
     }
-    
+
 }
