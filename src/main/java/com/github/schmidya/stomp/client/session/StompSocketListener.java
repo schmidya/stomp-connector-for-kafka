@@ -1,4 +1,4 @@
-package com.github.schmidya.stomp.client;
+package com.github.schmidya.stomp.client.session;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -9,13 +9,13 @@ import org.slf4j.LoggerFactory;
 
 import com.github.schmidya.stomp.client.frames.StompServerFrame;
 
-public class StompListener implements Runnable {
-    private static final Logger log = LoggerFactory.getLogger(StompListener.class);
+public class StompSocketListener implements Runnable {
+    private static final Logger log = LoggerFactory.getLogger(StompSocketListener.class);
 
     InputStream is;
     ConcurrentLinkedQueue<StompServerFrame> Q;
 
-    public StompListener(InputStream is, ConcurrentLinkedQueue<StompServerFrame> Q) {
+    public StompSocketListener(InputStream is, ConcurrentLinkedQueue<StompServerFrame> Q) {
         this.is = is;
         this.Q = Q;
     }

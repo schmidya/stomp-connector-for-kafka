@@ -1,0 +1,71 @@
+services:
+  broker:
+    image: docker.io/apache/activemq-artemis:latest-alpine
+    ports:
+      - 127.0.0.1:8161:8161
+      - 127.0.0.1:61613:61613
+      - 127.0.0.1:61614:61614
+    volumes:
+      - ./artemis-configs/stomp-broker.xml:/var/lib/artemis-instance/etc-override/broker.xml:z
+    healthcheck:
+      test: wget --spider localhost:8161 || exit 1
+      interval: 1s
+      timeout: 3s
+      retries: 60
+
+  stomp-producer:
+    build: stomp-client
+    environment:
+      STOMP_BROKER_HOSTNAME : broker
+      STOMP_BROKER_PORT : 61613
+      STOMP_BROKER_USERNAME : artemis
+      STOMP_BROKER_PASSWORD : artemis
+      NUM_MESSAGES : 20
+    volumes: 
+      - ./stomp-client/producer.py:/home/app/main.py:z
+    depends_on:
+      broker:
+        condition: service_healthy
+
+  test-service: # exit code of this service will determine if the integration test is successful
+    build: stomp-client
+    environment:
+      STOMP_BROKER_HOSTNAME : broker
+      STOMP_BROKER_PORT : 61613
+      STOMP_BROKER_USERNAME : artemis
+      STOMP_BROKER_PASSWORD : artemis
+      WAIT_SECONDS : 10
+    volumes: 
+      - ./stomp-client/consumer.py:/home/app/main.py:z
+    depends_on:
+      broker:
+        condition: service_healthy
+  
+  kafka:
+    build: kafka
+    healthcheck:
+      test: /opt/kafka/bin/kafka-cluster.sh cluster-id --bootstrap-server kafka:9092 || exit 1
+      interval: 1s
+      timeout: 60s
+      retries: 60
+
+  kafka-debug-consumer:
+    image: docker.io/apache/kafka
+    command: ["/opt/kafka/bin/kafka-console-consumer.sh", "--topic", "helloworld", "--bootstrap-server", "kafka:9092"]
+    depends_on:
+      kafka : 
+        condition: service_healthy
+  
+  kafka-connect:
+    image: docker.io/apache/kafka
+    command: ["/opt/kafka/bin/connect-standalone.sh", "/opt/kafka/config/custom/connect-config.properties", "/opt/kafka/config/custom/source-connector.properties", "/opt/kafka/config/custom/sink-connector.properties"]
+    volumes:
+      - ./kafka-configs/source-connector-tcp.properties:/opt/kafka/config/custom/source-connector.properties:z
+      - ./kafka-configs/sink-connector-tcp.properties:/opt/kafka/config/custom/sink-connector.properties:z
+      - ./kafka-configs/connect-config.properties:/opt/kafka/config/custom/connect-config.properties:z
+      - ../target/stomp-connector-for-kafka-1.0-SNAPSHOT.jar:/opt/connectors/connector.jar:z
+    depends_on:
+      kafka : 
+        condition: service_healthy
+      broker:
+        condition: service_healthy

@@ -1,18 +1,12 @@
 package com.github.schmidya.stomp.connector.source;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import org.apache.kafka.common.config.AbstractConfig;
-import org.apache.kafka.connect.data.Schema;
-import org.apache.kafka.connect.data.SchemaBuilder;
-import org.apache.kafka.connect.data.Struct;
 import org.apache.kafka.connect.source.SourceRecord;
 import org.apache.kafka.connect.source.SourceTask;
 import org.slf4j.Logger;
@@ -22,8 +16,8 @@ import com.github.schmidya.stomp.client.StompClient;
 import com.github.schmidya.stomp.client.frames.*;
 
 public class StompSourceTask extends SourceTask {
-
     private static final Logger log = LoggerFactory.getLogger(StompSourceTask.class);
+
 
     private StompClient client;
     private AbstractConfig config;
@@ -37,8 +31,7 @@ public class StompSourceTask extends SourceTask {
     public void start(Map<String, String> props) {
         config = new AbstractConfig(StompSourceConnector.CONFIG_DEF, props);
         log.error("HELLO KAFKA");
-        client = new StompClient(config.getString(StompSourceConnector.STOMP_BROKER_HOST_CONFIG),
-                config.getInt(StompSourceConnector.STOMP_BROKER_PORT_CONFIG));
+        client = new StompClient(config.getString(StompSourceConnector.STOMP_BROKER_URL_CONFIG));
         log.error("CREATED CLIENT");
         try {
             log.error("CLIENT ATTEMPTING TO CONNECT");

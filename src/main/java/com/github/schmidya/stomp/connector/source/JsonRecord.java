@@ -1,15 +1,12 @@
 package com.github.schmidya.stomp.connector.source;
 
 import java.math.BigDecimal;
-import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.NotImplementedException;
-import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.data.SchemaBuilder;
 import org.apache.kafka.connect.data.Struct;
-import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,9 +20,9 @@ public class JsonRecord {
         SchemaBuilder bld = SchemaBuilder.struct();
         for (String key : omap.keySet()) {
             Object v = omap.get(key);
-            if (v instanceof String s) {
+            if (v instanceof String) {
                 bld.field(key, Schema.STRING_SCHEMA);
-            } else if (v instanceof Integer i) {
+            } else if (v instanceof Integer) {
                 bld.field(key, Schema.INT32_SCHEMA);
             } else if (v instanceof BigDecimal d) {
                 omap.put(key, d.floatValue());

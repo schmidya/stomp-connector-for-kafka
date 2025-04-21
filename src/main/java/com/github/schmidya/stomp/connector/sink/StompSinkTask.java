@@ -28,8 +28,7 @@ public class StompSinkTask extends SinkTask {
     public void start(Map<String, String> props) {
         config = new AbstractConfig(StompSinkConnector.CONFIG_DEF, props);
         log.error("HELLO KAFKA");
-        client = new StompClient(config.getString(StompSinkConnector.STOMP_BROKER_HOST_CONFIG),
-                config.getInt(StompSinkConnector.STOMP_BROKER_PORT_CONFIG));
+        client = new StompClient(config.getString(StompSinkConnector.STOMP_BROKER_URL_CONFIG));
         log.error("CREATED CLIENT");
         try {
             log.error("CLIENT ATTEMPTING TO CONNECT");

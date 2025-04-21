@@ -1,11 +1,9 @@
 package com.github.schmidya.stomp.client;
 
 import java.io.IOException;
-import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingDeque;
 
 import org.slf4j.Logger;
@@ -20,29 +18,25 @@ import com.github.schmidya.stomp.client.frames.StompReceiptFrame;
 import com.github.schmidya.stomp.client.frames.StompSendFrame;
 import com.github.schmidya.stomp.client.frames.StompServerFrame;
 import com.github.schmidya.stomp.client.frames.StompSubscribeFrame;
+import com.github.schmidya.stomp.client.session.StompSession;
 
 public class StompClient {
 
     private static final Logger log = LoggerFactory.getLogger(StompClient.class);
 
-    private String hostname;
-    private int port;
-    private Socket sk;
-    private ConcurrentLinkedQueue<StompServerFrame> frames;
+    private String url;
+    private StompSession session;
     private Queue<StompAckFrame> ack_frames;
-    Thread listenerThread;
 
-    public StompClient(String hostname, int port) {
-        this.hostname = hostname;
-        this.port = port;
-        frames = new ConcurrentLinkedQueue<>();
+    public StompClient(String url) {
+        this.url = url;
         ack_frames = new LinkedBlockingDeque<>();
     }
 
     public void write(StompClientFrame frame) {
         // TODO: place to check connection health
         try {
-            sk.getOutputStream().write(frame.toString().getBytes());
+            session.sendFrame(frame);
         } catch (IOException e) {
 
         }
@@ -53,22 +47,13 @@ public class StompClient {
     }
 
     public StompConnectedFrame connect(String login, String passcode) throws IOException {
-        sk = new Socket(hostname, port);
-
-        StompListener ls = new StompListener(sk.getInputStream(), frames);
-        listenerThread = new Thread(ls);
-        listenerThread.start();
-
-        if (sk.isConnected()) {
-            sk.getOutputStream().write(new StompConnectFrame(hostname + ":" + Integer.toString(port), login, passcode)
-                    .toString().getBytes());
-            StompServerFrame frame = getNextFrame();
-            if (frame instanceof StompConnectedFrame ret)
-                return ret;
-            else {
-                log.error(frame.toString());
-            }
-        }
+        session = StompSession.fromUrl(url);
+        session.connect();
+        session.sendFrame(new StompConnectFrame(url, login, passcode));
+        StompServerFrame frame = getNextFrame();
+        log.error(frame.toString());
+        if (frame instanceof StompConnectedFrame ret)
+            return ret;
         return null;
     }
 
@@ -76,7 +61,7 @@ public class StompClient {
         String clientId = "test";
 
         StompSubscribeFrame f = new StompSubscribeFrame(clientId, destination, "sub-test");
-        sk.getOutputStream().write(f.toString().getBytes());
+        session.sendFrame(f);
         StompServerFrame r = getNextFrame();
         if (r instanceof StompReceiptFrame rct) {
             log.error(rct.toString());
@@ -92,7 +77,7 @@ public class StompClient {
         // ack the previously polled messages
         for (StompAckFrame af = ack_frames.poll(); af != null; af = ack_frames.poll()) {
             try {
-                sk.getOutputStream().write(af.toString().getBytes());
+                session.sendFrame(af);
             } catch (Exception e) {
                 log.error(e.toString());
             }
@@ -101,7 +86,7 @@ public class StompClient {
         List<StompMessageFrame> ret = new ArrayList<>();
         StompServerFrame f = null;
         do {
-            f = frames.poll();
+            f = session.getReceivedFrameQueue().poll();
             if (f instanceof StompMessageFrame m) {
                 ret.add(m);
                 ack_frames.add(new StompAckFrame(m.getAckId()));
@@ -115,7 +100,7 @@ public class StompClient {
     public StompServerFrame getNextFrame() {
         StompServerFrame ret = null;
         do {
-            ret = frames.poll();
+            ret = session.getReceivedFrameQueue().poll();
         } while (ret == null);
         return ret;
     }
