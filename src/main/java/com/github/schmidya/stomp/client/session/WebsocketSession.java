@@ -63,17 +63,7 @@ public class WebsocketSession implements StompSession {
         }
         sendFrame(frame);
 
-        while (serverFrameQueue.checkError() == null && serverFrameQueue.checkConnected() == null) {
-            try {
-                serverFrameQueue.wait();
-            } catch (InterruptedException e) {
-
-            }
-        }
-
-        if (serverFrameQueue.checkError() != null)
-            return serverFrameQueue.checkError();
-        return serverFrameQueue.checkConnected();
+        return serverFrameQueue.waitForConnected();
     }
 
 }

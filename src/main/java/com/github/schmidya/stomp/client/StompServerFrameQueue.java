@@ -23,7 +23,7 @@ public class StompServerFrameQueue {
         receipts = new ConcurrentLinkedQueue<StompReceiptFrame>();
     }
 
-    public void add(StompServerFrame frame) {
+    public synchronized void add(StompServerFrame frame) {
         if (frame instanceof StompMessageFrame m)
             messages.add(m);
         else if (frame instanceof StompReceiptFrame r)
@@ -32,9 +32,10 @@ public class StompServerFrameQueue {
             errorFrame = e;
         else if (frame instanceof StompConnectedFrame c)
             connectedFrame = c;
+        notifyAll();
     }
 
-    public StompReceiptFrame waitForReceipt(String receiptId) throws IOException {
+    public synchronized StompReceiptFrame waitForReceipt(String receiptId) throws IOException {
         while (true) {
             if (checkError() != null) {
                 throw new IOException("Received error frame from STOMP broker:\n" + checkError().toString());
@@ -47,6 +48,27 @@ public class StompServerFrameQueue {
                     return f;
                 }
             }
+            try {
+                wait();
+            } catch (InterruptedException e) {
+
+            }
+        }
+    }
+
+    public synchronized StompServerFrame waitForConnected() {
+        while (true) {
+            if (checkError() != null) {
+                return checkError();
+            }
+            if (checkConnected() != null) {
+                return checkConnected();
+            }
+            try {
+                wait();
+            } catch (InterruptedException e) {
+
+            }
         }
     }
 
@@ -58,11 +80,11 @@ public class StompServerFrameQueue {
         return receipts;
     }
 
-    public StompErrorFrame checkError() {
+    public synchronized StompErrorFrame checkError() {
         return errorFrame;
     }
 
-    public StompConnectedFrame checkConnected() {
+    public synchronized StompConnectedFrame checkConnected() {
         return connectedFrame;
     }
 

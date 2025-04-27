@@ -63,13 +63,7 @@ public class TransportLayerSession implements StompSession {
 
         sendFrame(frame);
 
-        while (serverFrameQueue.checkError() == null && serverFrameQueue.checkConnected() == null) {
-
-        }
-
-        if (serverFrameQueue.checkError() != null)
-            return serverFrameQueue.checkError();
-        return serverFrameQueue.checkConnected();
+        return serverFrameQueue.waitForConnected();
     }
 
     @Override
