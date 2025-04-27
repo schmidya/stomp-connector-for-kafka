@@ -3,53 +3,52 @@ package com.github.schmidya.stomp.client.session;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.junit.jupiter.api.Assumptions.assumeFalse;
-
-import java.io.IOError;
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.UnknownHostException;
+
+import javax.net.SocketFactory;
+import javax.net.ssl.SSLSocketFactory;
 
 public class StompSessionTest {
 
     @Test
-    public void parseTcpUrl(){
+    public void parseTcpUrl() {
         try {
             StompSession session = StompSession.fromUrl("tcp://host:1234");
             assertInstanceOf(TransportLayerSession.class, session);
-            if (session instanceof TransportLayerSession ts){
-                assertEquals("host", ts.hostname);
-                assertEquals(1234, ts.port);
-                assertFalse(ts.ssl);
+            if (session instanceof TransportLayerSession ts) {
+                assertEquals("host", ts.getHostname());
+                assertEquals(1234, ts.getPort());
+                assertInstanceOf(SocketFactory.class, ts.getSocketFactory());
+                assertFalse(ts.getSocketFactory() instanceof SSLSocketFactory);
             }
-        } catch(IOException e){
+        } catch (IOException e) {
             fail();
         }
     }
 
     @Test
-    public void parseSslUrl(){
+    public void parseSslUrl() {
         try {
             StompSession session = StompSession.fromUrl("ssl://host:1234");
             assertInstanceOf(TransportLayerSession.class, session);
-            if (session instanceof TransportLayerSession ts){
-                assertEquals("host", ts.hostname);
-                assertEquals(1234, ts.port);
-                assertTrue(ts.ssl);
+            if (session instanceof TransportLayerSession ts) {
+                assertEquals("host", ts.getHostname());
+                assertEquals(1234, ts.getPort());
+                assertInstanceOf(SSLSocketFactory.class, ts.getSocketFactory());
             }
-        } catch(IOException e){
+        } catch (IOException e) {
             fail();
         }
     }
 
     @Test
-    public void parseWsUrl(){
-        try{
+    public void parseWsUrl() {
+        try {
             StompSession session = StompSession.fromUrl("ws://host:1234");
             assertInstanceOf(WebsocketSession.class, session);
-        } catch(IOException e){
+        } catch (IOException e) {
             fail();
         }
     }
-    
+
 }

@@ -9,12 +9,8 @@ public class StompMessageFrame extends StompServerFrame {
         // TODO Auto-generated constructor stub
     }
 
-    public String getBody() {
-        return body;
-    }
-
     public String getAckId() {
-        return headers.get("ack");
+        return getHeader("ack");
     }
 
 }

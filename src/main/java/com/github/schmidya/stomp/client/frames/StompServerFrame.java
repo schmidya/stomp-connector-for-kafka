@@ -1,6 +1,8 @@
 package com.github.schmidya.stomp.client.frames;
 
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 public abstract class StompServerFrame extends StompFrame {
@@ -16,31 +18,36 @@ public abstract class StompServerFrame extends StompFrame {
 
     public static StompServerFrame fromString(String s) {
 
-        Object[] lines = s.lines().toArray();
+        List<String> lines = s.lines().toList();
         Map<String, String> headers = new HashMap<>();
-        int idx = 0;
-        String command = "";
 
-        while (idx < lines.length) {
-            command = (String) lines[idx++];
-            if (command.length() > 0)
-                break;
-        }
+        Iterator<String> it = lines.iterator();
 
-        while (idx < lines.length) {
-            String headerLine = (String) lines[idx++];
+        String command = it.next();
+        while (command.equals(""))
+            command = it.next();
+
+        while (it.hasNext()) {
+            String headerLine = it.next();
             if (headerLine.equals(""))
                 break;
             String[] splits = headerLine.split(":");
             if (splits.length != 2) {
-                break; // TODO: throw exception
+                throw new IllegalArgumentException(
+                        "Encounter malformed STOMP header: " + headerLine + "\nin the server frame:\n" + s);
             }
             headers.put(splits[0], splits[1]);
         }
 
         String body = "";
-        while (idx < lines.length) {
-            body += lines[idx++] + "\n";
+
+        while (it.hasNext()) {
+            body += it.next();
+            if (it.hasNext())
+                body += "\n";
+            else if (body.lastIndexOf(0) >= 0) {
+                body = body.substring(0, body.lastIndexOf(0));
+            }
         }
 
         return fromData(command, headers, body);

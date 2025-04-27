@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.schmidya.stomp.client.StompClient;
+import com.github.schmidya.stomp.client.frames.StompConnectFrame;
 import com.github.schmidya.stomp.client.frames.StompServerFrame;
 
 public class StompSinkTask extends SinkTask {
@@ -28,11 +29,14 @@ public class StompSinkTask extends SinkTask {
     public void start(Map<String, String> props) {
         config = new AbstractConfig(StompSinkConnector.CONFIG_DEF, props);
         log.error("HELLO KAFKA");
-        client = new StompClient(config.getString(StompSinkConnector.STOMP_BROKER_URL_CONFIG));
-        log.error("CREATED CLIENT");
         try {
+            client = StompClient.fromUrl(config.getString(StompSinkConnector.STOMP_BROKER_URL_CONFIG));
+            log.error("CREATED CLIENT");
             log.error("CLIENT ATTEMPTING TO CONNECT");
-            StompServerFrame connected_frame = client.connect("artemis", "artemis");
+            StompServerFrame connected_frame = client.connect(new StompConnectFrame(
+                    config.getString(StompSinkConnector.STOMP_BROKER_URL_CONFIG),
+                    config.getString(StompSinkConnector.STOMP_BROKER_LOGIN_CONFIG),
+                    config.getString(StompSinkConnector.STOMP_BROKER_PASSCODE_CONFIG)));
             log.error(connected_frame.toString());
         } catch (IOException e) {
             log.error(e.toString());

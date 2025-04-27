@@ -3,15 +3,16 @@ package com.github.schmidya.stomp.client.session;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ServiceConfigurationError;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.github.schmidya.stomp.client.StompServerFrameQueue;
 import com.github.schmidya.stomp.client.frames.StompClientFrame;
+import com.github.schmidya.stomp.client.frames.StompConnectFrame;
 import com.github.schmidya.stomp.client.frames.StompServerFrame;
 
-import jakarta.websocket.ContainerProvider;
+import jakarta.websocket.WebSocketContainer;
 import jakarta.websocket.DeploymentException;
 import jakarta.websocket.Session;
 
@@ -21,17 +22,24 @@ public class WebsocketSession implements StompSession {
     public String url;
 
     private Session session;
+    private WebSocketContainer webSocketContainer;
     private StompWebsocketListener listener;
-    private ConcurrentLinkedQueue<StompServerFrame> receivedFrames;
+    private StompServerFrameQueue serverFrameQueue;
 
-    public WebsocketSession(String url) {
+    public WebsocketSession(
+            String url,
+            WebSocketContainer webSocketContainer,
+            StompWebsocketListener listener,
+            StompServerFrameQueue serverFrameQueue) {
         this.url = url;
-        receivedFrames = new ConcurrentLinkedQueue<StompServerFrame>();
+        this.listener = listener;
+        this.webSocketContainer = webSocketContainer;
+        this.serverFrameQueue = serverFrameQueue;
     }
 
     @Override
-    public ConcurrentLinkedQueue<StompServerFrame> getReceivedFrameQueue() {
-        return receivedFrames;
+    public StompServerFrameQueue getServerFrameQueue() {
+        return serverFrameQueue;
     }
 
     @Override
@@ -41,11 +49,11 @@ public class WebsocketSession implements StompSession {
     }
 
     @Override
-    public void connect() throws IOException {
+    public StompServerFrame connect(StompConnectFrame frame) throws IOException {
         log.error("ATTEMPTING WEBSOCKET CONNECTION");
+        listener.setServerFrameQueue(serverFrameQueue);
         try {
-            listener = new StompWebsocketListener(receivedFrames);
-            session = ContainerProvider.getWebSocketContainer().connectToServer(listener, URI.create(url));
+            session = webSocketContainer.connectToServer(listener, URI.create(url));
         } catch (DeploymentException e) {
             log.error(e.getMessage());
             throw new IOException(e.getMessage());
@@ -53,6 +61,19 @@ public class WebsocketSession implements StompSession {
             log.error(err.getMessage());
             throw err;
         }
+        sendFrame(frame);
+
+        while (serverFrameQueue.checkError() == null && serverFrameQueue.checkConnected() == null) {
+            try {
+                serverFrameQueue.wait();
+            } catch (InterruptedException e) {
+
+            }
+        }
+
+        if (serverFrameQueue.checkError() != null)
+            return serverFrameQueue.checkError();
+        return serverFrameQueue.checkConnected();
     }
 
 }

@@ -14,10 +14,10 @@ import org.slf4j.LoggerFactory;
 
 import com.github.schmidya.stomp.client.StompClient;
 import com.github.schmidya.stomp.client.frames.*;
+import com.github.schmidya.stomp.connector.sink.StompSinkConnector;
 
 public class StompSourceTask extends SourceTask {
     private static final Logger log = LoggerFactory.getLogger(StompSourceTask.class);
-
 
     private StompClient client;
     private AbstractConfig config;
@@ -31,11 +31,14 @@ public class StompSourceTask extends SourceTask {
     public void start(Map<String, String> props) {
         config = new AbstractConfig(StompSourceConnector.CONFIG_DEF, props);
         log.error("HELLO KAFKA");
-        client = new StompClient(config.getString(StompSourceConnector.STOMP_BROKER_URL_CONFIG));
-        log.error("CREATED CLIENT");
         try {
+            client = StompClient.fromUrl(config.getString(StompSourceConnector.STOMP_BROKER_URL_CONFIG));
+            log.error("CREATED CLIENT");
             log.error("CLIENT ATTEMPTING TO CONNECT");
-            StompServerFrame connected_frame = client.connect("artemis", "artemis");
+            StompServerFrame connected_frame = client.connect(new StompConnectFrame(
+                    config.getString(StompSinkConnector.STOMP_BROKER_URL_CONFIG),
+                    config.getString(StompSinkConnector.STOMP_BROKER_LOGIN_CONFIG),
+                    config.getString(StompSinkConnector.STOMP_BROKER_PASSCODE_CONFIG)));
             log.error(connected_frame.toString());
             log.error("CLIENT ATTEMPTING SUBSCRIPTION");
             StompServerFrame sub_receit = client.subscribe(config.getString(StompSourceConnector.STOMP_DEST_CONFIG));

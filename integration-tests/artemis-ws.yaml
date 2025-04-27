@@ -20,7 +20,7 @@ services:
       STOMP_BROKER_PORT : 61613
       STOMP_BROKER_USERNAME : artemis
       STOMP_BROKER_PASSWORD : artemis
-      NUM_MESSAGES : 20
+      NUM_MESSAGES : 100
     volumes: 
       - ./stomp-client/producer.py:/home/app/main.py:z
     depends_on:

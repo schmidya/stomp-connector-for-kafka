@@ -1,37 +1,34 @@
 package com.github.schmidya.stomp.client.session;
 
-import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.github.schmidya.stomp.client.StompServerFrameQueue;
 import com.github.schmidya.stomp.client.frames.StompServerFrame;
 
 import jakarta.websocket.ClientEndpoint;
-import jakarta.websocket.CloseReason;
-import jakarta.websocket.EndpointConfig;
-import jakarta.websocket.OnClose;
-import jakarta.websocket.OnError;
 import jakarta.websocket.OnMessage;
-import jakarta.websocket.OnOpen;
 import jakarta.websocket.Session;
 
 @ClientEndpoint
 public class StompWebsocketListener {
     private static final Logger log = LoggerFactory.getLogger(StompWebsocketListener.class);
 
-    private ConcurrentLinkedQueue<StompServerFrame> receivedFrames;
+    private StompServerFrameQueue Q;
 
-    public StompWebsocketListener(ConcurrentLinkedQueue<StompServerFrame> receivedFrames){
-        this.receivedFrames = receivedFrames;
+    public void setServerFrameQueue(StompServerFrameQueue Q) {
+        if (this.Q != null)
+            throw new IllegalArgumentException("server frame queue already set");
+        this.Q = Q;
     }
-    
+
     @OnMessage
-    public void receiveFrame(byte[] message, Session session){
+    public void receiveFrame(byte[] message, Session session) {
         StompServerFrame frame = StompServerFrame.fromString(new String(message, StandardCharsets.UTF_8));
-        receivedFrames.add(frame);
+        Q.add(frame);
     }
 
     // @OnError
