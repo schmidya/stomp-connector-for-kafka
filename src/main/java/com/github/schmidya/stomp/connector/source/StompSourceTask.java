@@ -57,7 +57,7 @@ public class StompSourceTask extends SourceTask {
             ret.add(new SourceRecord(
                     Collections.singletonMap("topic", config.getString(StompSourceConnector.TOPIC_CONFIG)),
                     Collections.singletonMap("message_count", 1),
-                    config.getString("topic"),
+                    config.getString(StompSourceConnector.TOPIC_CONFIG),
                     r.getSchema(),
                     r.getValue()));
         }

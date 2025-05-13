@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration xmlns="urn:activemq">
+   <core xmlns="urn:activemq:core">
+        <acceptors>
+            <acceptor name="stomp-acceptor">tcp://0.0.0.0:61613?protocols=STOMP;connectionTtl=20000</acceptor>
+            <acceptor name="stomp-ws-acceptor">tcp://0.0.0.0:61614?protocols=STOMP_WS</acceptor>
+        </acceptors>
+        <security-enabled>false</security-enabled>
+    </core>
+</configuration>

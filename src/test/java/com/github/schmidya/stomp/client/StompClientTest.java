@@ -1,18 +1,19 @@
 package com.github.schmidya.stomp.client;
 
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.activemq.ArtemisContainer;
-import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 import com.github.schmidya.stomp.client.frames.StompConnectFrame;
 import com.github.schmidya.stomp.client.frames.StompConnectedFrame;
+import com.github.schmidya.stomp.client.frames.StompReceiptFrame;
 import com.github.schmidya.stomp.client.frames.StompServerFrame;
 
 @Testcontainers
@@ -21,8 +22,9 @@ public class StompClientTest {
 
         StompClient underTest;
 
+        @SuppressWarnings("resource")
         @Container
-        public GenericContainer artemis = new ArtemisContainer(
+        public ArtemisContainer artemis = new ArtemisContainer(
                         DockerImageName.parse("docker.io/apache/activemq-artemis:latest-alpine")
                                         .asCompatibleSubstituteFor("apache/activemq-artemis"))
                         .withExposedPorts(61613);
@@ -39,6 +41,26 @@ public class StompClientTest {
         public void connectTest() throws Exception {
                 StompServerFrame frame = underTest.connect(new StompConnectFrame("artemis", "artemis", "artemis"));
                 assertInstanceOf(StompConnectedFrame.class, frame);
+        }
+
+        @Test
+        public void echoTest() throws Exception {
+                StompServerFrame frame = underTest.connect(new StompConnectFrame("artemis", "artemis", "artemis"));
+                assertInstanceOf(StompConnectedFrame.class, frame);
+
+                StompReceiptFrame f = underTest.subscribe("dest/echo");
+                logger.info(f.toString());
+
+                underTest.sendMessage("{'hello' : 'world'}", "dest/echo");
+
+                Thread.sleep(100);
+
+                var messages = underTest.poll();
+
+                assertEquals(messages.size(), 1);
+
+                assertEquals("{'hello' : 'world'}", messages.get(0).getBody());
+
         }
 
 }

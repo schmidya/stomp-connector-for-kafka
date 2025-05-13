@@ -45,7 +45,7 @@ public class StompClient {
         try {
             session.sendFrame(frame);
         } catch (IOException e) {
-
+            log.error(e.getMessage());
         }
     }
 

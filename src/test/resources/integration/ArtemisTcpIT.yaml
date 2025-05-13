@@ -1,0 +1,47 @@
+services:
+  broker:
+    image: docker.io/apache/activemq-artemis:latest-alpine
+    ports:
+      - 127.0.0.1:8161:8161
+      - 127.0.0.1:61613:61613
+      - 127.0.0.1:61614:61614
+    volumes:
+      - ./stomp-broker.xml:/var/lib/artemis-instance/etc-override/broker.xml
+    healthcheck:
+      test: wget --spider localhost:8161 || exit 1
+      interval: 1s
+      timeout: 3s
+      retries: 60
+
+  kafka:
+    image: docker.io/apache/kafka:4.0.0
+    volumes:
+      - ./kafka-server.properties:/etc/kafka/docker/server.properties
+    healthcheck:
+      test: /opt/kafka/bin/kafka-cluster.sh cluster-id --bootstrap-server kafka:9092 || exit 1
+      interval: 1s
+      timeout: 60s
+      retries: 60
+    
+  kafka-debug-consumer:
+    image: docker.io/apache/kafka
+    command: ["/opt/kafka/bin/kafka-console-consumer.sh", "--topic", "stomp", "--bootstrap-server", "kafka:9092"]
+    depends_on:
+      kafka : 
+        condition: service_healthy
+
+  kafka-connect:
+    image: docker.io/apache/kafka:4.0.0
+    command: ["/opt/kafka/bin/connect-standalone.sh", "/opt/kafka/config/custom/connect-config.properties", "/opt/kafka/config/custom/source-connector.properties", "/opt/kafka/config/custom/sink-connector.properties"]
+    volumes:
+      - ./source-connector-tcp.properties:/opt/kafka/config/custom/source-connector.properties
+      - ./sink-connector-tcp.properties:/opt/kafka/config/custom/sink-connector.properties
+      - ./connect-config.properties:/opt/kafka/config/custom/connect-config.properties
+      - ${CONNECTOR_JAR_PATH:-./../../../../target/stomp-connector-for-kafka-1.0-SNAPSHOT.jar}:/opt/connectors/connector.jar
+    ports:
+      - 127.0.0.1:8083:8083
+    depends_on:
+      kafka : 
+        condition: service_healthy
+      broker:
+        condition: service_healthy
