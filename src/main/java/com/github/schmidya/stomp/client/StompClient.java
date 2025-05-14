@@ -45,7 +45,7 @@ public class StompClient {
         try {
             session.sendFrame(frame);
         } catch (IOException e) {
-            log.error(e.getMessage());
+            log.error("Exception while trying to send frame to broker: " + e.getMessage());
         }
     }
 
@@ -55,7 +55,7 @@ public class StompClient {
 
     public StompConnectedFrame connect(StompConnectFrame frame) throws IOException {
         StompServerFrame response = session.connect(frame);
-        log.error(frame.toString());
+        log.info("Established connection to broker:\n" + frame.toString());
         if (response instanceof StompConnectedFrame ret)
             return ret;
         else if (response instanceof StompErrorFrame err) {
@@ -71,10 +71,10 @@ public class StompClient {
         session.sendFrame(f);
         StompServerFrame r = session.getServerFrameQueue().waitForReceipt("sub-test");
         if (r instanceof StompReceiptFrame rct) {
-            log.error(rct.toString());
+            log.info("Obtained receipt for topic subscription:\n" + rct.toString());
             return rct;
         } else {
-            log.error(r.toString());
+            log.error("Unexpected response from Server for subscription:\n" + r.toString());
         }
 
         return null;
@@ -86,7 +86,8 @@ public class StompClient {
             try {
                 session.sendFrame(af);
             } catch (Exception e) {
-                log.error(e.toString());
+                log.error("Exception when ack-ing messages to broker. Sent frame:\n" + af.toString() + "\nException:\n"
+                        + e.toString());
             }
         }
 

@@ -35,22 +35,22 @@ public class StompSinkTask extends SinkTask {
         try {
             serializer = (MessageSerializer) config.getClass(StompSinkConnector.SERIALIZER_CLASS_CONFIG)
                     .getConstructor().newInstance();
-            log.error("HELLO KAFKA");
+            log.info("Create serializer instance of class: "
+                    + config.getClass(StompSinkConnector.SERIALIZER_CLASS_CONFIG).toString());
         } catch (Exception e) {
             log.error("Exception during instantiation of Serializer class:" + e.getMessage());
             log.warn("Defaulting to string serializer");
             serializer = new StringSerializer();
         }
-        log.error("HELLO KAFKA");
+        log.trace("Attempting to create Stomp client");
         try {
             client = StompClient.fromUrl(config.getString(StompSinkConnector.STOMP_BROKER_URL_CONFIG));
-            log.error("CREATED CLIENT");
-            log.error("CLIENT ATTEMPTING TO CONNECT");
+            log.trace("created client");
             StompServerFrame connected_frame = client.connect(new StompConnectFrame(
                     config.getString(StompSinkConnector.STOMP_BROKER_URL_CONFIG),
                     config.getString(StompSinkConnector.STOMP_BROKER_LOGIN_CONFIG),
                     config.getString(StompSinkConnector.STOMP_BROKER_PASSCODE_CONFIG)));
-            log.error(connected_frame.toString());
+            log.info("client successfully connected to broker:\n" + connected_frame.toString());
         } catch (IOException e) {
             log.error(e.toString());
         }

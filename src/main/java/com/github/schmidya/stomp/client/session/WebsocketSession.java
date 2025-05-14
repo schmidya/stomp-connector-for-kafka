@@ -44,13 +44,13 @@ public class WebsocketSession implements StompSession {
 
     @Override
     public void sendFrame(StompClientFrame frame) throws IOException {
-        log.error("SENDING FRAME OVER WEBSOCKET");
+        log.trace("sending frame over websocket:\n" + frame.toString());
         session.getBasicRemote().sendText(frame.toString());
     }
 
     @Override
     public StompServerFrame connect(StompConnectFrame frame) throws IOException {
-        log.error("ATTEMPTING WEBSOCKET CONNECTION");
+        log.info("Attempting WS connection");
         listener.setServerFrameQueue(serverFrameQueue);
         try {
             session = webSocketContainer.connectToServer(listener, URI.create(url));

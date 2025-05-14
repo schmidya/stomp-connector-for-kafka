@@ -17,7 +17,6 @@ import com.github.schmidya.stomp.client.frames.*;
 import com.github.schmidya.stomp.connector.serializer.MessageRecord;
 import com.github.schmidya.stomp.connector.serializer.MessageSerializer;
 import com.github.schmidya.stomp.connector.serializer.StringSerializer;
-import com.github.schmidya.stomp.connector.sink.StompSinkConnector;
 
 public class StompSourceTask extends SourceTask {
     private static final Logger log = LoggerFactory.getLogger(StompSourceTask.class);
@@ -37,7 +36,8 @@ public class StompSourceTask extends SourceTask {
         try {
             serializer = (MessageSerializer) config.getClass(StompSourceConnector.SERIALIZER_CLASS_CONFIG)
                     .getConstructor().newInstance();
-            log.error("HELLO KAFKA");
+            log.info("Create serializer instance of class: "
+                    + config.getClass(StompSourceConnector.SERIALIZER_CLASS_CONFIG).toString());
         } catch (Exception e) {
             log.error("Exception during instantiation of Serializer class:" + e.getMessage());
             log.warn("Defaulting to string serializer");
@@ -45,16 +45,15 @@ public class StompSourceTask extends SourceTask {
         }
         try {
             client = StompClient.fromUrl(config.getString(StompSourceConnector.STOMP_BROKER_URL_CONFIG));
-            log.error("CREATED CLIENT");
-            log.error("CLIENT ATTEMPTING TO CONNECT");
+            log.trace("created client");
             StompServerFrame connected_frame = client.connect(new StompConnectFrame(
-                    config.getString(StompSinkConnector.STOMP_BROKER_URL_CONFIG),
-                    config.getString(StompSinkConnector.STOMP_BROKER_LOGIN_CONFIG),
-                    config.getString(StompSinkConnector.STOMP_BROKER_PASSCODE_CONFIG)));
-            log.error(connected_frame.toString());
-            log.error("CLIENT ATTEMPTING SUBSCRIPTION");
+                    config.getString(StompSourceConnector.STOMP_BROKER_URL_CONFIG),
+                    config.getString(StompSourceConnector.STOMP_BROKER_LOGIN_CONFIG),
+                    config.getString(StompSourceConnector.STOMP_BROKER_PASSCODE_CONFIG)));
+            log.info("client successfully connected to broker:\n" + connected_frame.toString());
             StompServerFrame sub_receit = client.subscribe(config.getString(StompSourceConnector.STOMP_DEST_CONFIG));
-            log.error(sub_receit.toString());
+            log.info("client successfully subscribed to topic "
+                    + config.getString(StompSourceConnector.STOMP_DEST_CONFIG) + ":\n" + sub_receit.toString());
         } catch (IOException e) {
             log.error(e.toString());
         }

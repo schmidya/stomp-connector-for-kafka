@@ -42,7 +42,7 @@ public class JsonSerializer implements MessageSerializer {
             return deserializeList(list);
         }
 
-        log.error("Unable to build schema for value of type "
+        log.warn("Unable to build schema for value of type "
                 + v.getClass() + ":\n"
                 + v.toString());
         return null;
