@@ -14,12 +14,15 @@ import org.apache.kafka.connect.sink.SinkConnector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.github.schmidya.stomp.connector.serializer.StringSerializer;
+
 public class StompSinkConnector extends SinkConnector {
     public static final String STOMP_BROKER_URL_CONFIG = "stomp.broker.url";
     public static final String STOMP_BROKER_LOGIN_CONFIG = "stomp.broker.login";
     public static final String STOMP_BROKER_PASSCODE_CONFIG = "stomp.broker.passcode";
     public static final String STOMP_DEST_CONFIG = "stomp.destination";
     public static final String TOPIC_CONFIG = "topics";
+    public static final String SERIALIZER_CLASS_CONFIG = "stomp.messaging.serializer";
 
     private static final Logger log = LoggerFactory.getLogger(StompSinkConnector.class);
 
@@ -32,7 +35,9 @@ public class StompSinkConnector extends SinkConnector {
             .define(STOMP_DEST_CONFIG, Type.STRING, ConfigDef.NO_DEFAULT_VALUE, Importance.HIGH,
                     "STOMP destination to subscribe to")
             .define(TOPIC_CONFIG, Type.STRING, ConfigDef.NO_DEFAULT_VALUE, new ConfigDef.NonEmptyString(),
-                    Importance.HIGH, "The topic to publish data to");
+                    Importance.HIGH, "The topic to publish data to")
+            .define(SERIALIZER_CLASS_CONFIG, Type.CLASS, StringSerializer.class, Importance.MEDIUM,
+                    "The class that will (de)serialize Stomp messages");
 
     private Map<String, String> props;
 

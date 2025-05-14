@@ -14,6 +14,9 @@ import org.slf4j.LoggerFactory;
 
 import com.github.schmidya.stomp.client.StompClient;
 import com.github.schmidya.stomp.client.frames.*;
+import com.github.schmidya.stomp.connector.serializer.MessageRecord;
+import com.github.schmidya.stomp.connector.serializer.MessageSerializer;
+import com.github.schmidya.stomp.connector.serializer.StringSerializer;
 import com.github.schmidya.stomp.connector.sink.StompSinkConnector;
 
 public class StompSourceTask extends SourceTask {
@@ -21,6 +24,7 @@ public class StompSourceTask extends SourceTask {
 
     private StompClient client;
     private AbstractConfig config;
+    private MessageSerializer serializer;
 
     @Override
     public String version() {
@@ -30,7 +34,15 @@ public class StompSourceTask extends SourceTask {
     @Override
     public void start(Map<String, String> props) {
         config = new AbstractConfig(StompSourceConnector.CONFIG_DEF, props);
-        log.error("HELLO KAFKA");
+        try {
+            serializer = (MessageSerializer) config.getClass(StompSourceConnector.SERIALIZER_CLASS_CONFIG)
+                    .getConstructor().newInstance();
+            log.error("HELLO KAFKA");
+        } catch (Exception e) {
+            log.error("Exception during instantiation of Serializer class:" + e.getMessage());
+            log.warn("Defaulting to string serializer");
+            serializer = new StringSerializer();
+        }
         try {
             client = StompClient.fromUrl(config.getString(StompSourceConnector.STOMP_BROKER_URL_CONFIG));
             log.error("CREATED CLIENT");
@@ -53,13 +65,13 @@ public class StompSourceTask extends SourceTask {
         List<SourceRecord> ret = new ArrayList<SourceRecord>();
         List<StompMessageFrame> msgs = client.poll();
         for (StompMessageFrame msg : msgs) {
-            JsonRecord r = new JsonRecord(msg.getBody());
+            MessageRecord r = serializer.deserialize(msg.getBody());
             ret.add(new SourceRecord(
                     Collections.singletonMap("topic", config.getString(StompSourceConnector.TOPIC_CONFIG)),
                     Collections.singletonMap("message_count", 1),
                     config.getString(StompSourceConnector.TOPIC_CONFIG),
-                    r.getSchema(),
-                    r.getValue()));
+                    r.schema(),
+                    r.value()));
         }
         return ret;
     }

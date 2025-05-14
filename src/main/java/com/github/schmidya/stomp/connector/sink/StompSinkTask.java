@@ -13,12 +13,16 @@ import org.slf4j.LoggerFactory;
 import com.github.schmidya.stomp.client.StompClient;
 import com.github.schmidya.stomp.client.frames.StompConnectFrame;
 import com.github.schmidya.stomp.client.frames.StompServerFrame;
+import com.github.schmidya.stomp.connector.serializer.MessageRecord;
+import com.github.schmidya.stomp.connector.serializer.MessageSerializer;
+import com.github.schmidya.stomp.connector.serializer.StringSerializer;
 
 public class StompSinkTask extends SinkTask {
     private static final Logger log = LoggerFactory.getLogger(StompSinkTask.class);
 
     private StompClient client;
     private AbstractConfig config;
+    private MessageSerializer serializer;
 
     @Override
     public String version() {
@@ -28,6 +32,15 @@ public class StompSinkTask extends SinkTask {
     @Override
     public void start(Map<String, String> props) {
         config = new AbstractConfig(StompSinkConnector.CONFIG_DEF, props);
+        try {
+            serializer = (MessageSerializer) config.getClass(StompSinkConnector.SERIALIZER_CLASS_CONFIG)
+                    .getConstructor().newInstance();
+            log.error("HELLO KAFKA");
+        } catch (Exception e) {
+            log.error("Exception during instantiation of Serializer class:" + e.getMessage());
+            log.warn("Defaulting to string serializer");
+            serializer = new StringSerializer();
+        }
         log.error("HELLO KAFKA");
         try {
             client = StompClient.fromUrl(config.getString(StompSinkConnector.STOMP_BROKER_URL_CONFIG));
@@ -46,8 +59,8 @@ public class StompSinkTask extends SinkTask {
     @Override
     public void put(Collection<SinkRecord> records) {
         for (SinkRecord record : records) {
-            client.sendMessage(record.value().toString(), config.getString(StompSinkConnector.STOMP_DEST_CONFIG));
-
+            String message = serializer.serialize(new MessageRecord(record.value(), record.valueSchema()));
+            client.sendMessage(message, config.getString(StompSinkConnector.STOMP_DEST_CONFIG));
         }
     }
 

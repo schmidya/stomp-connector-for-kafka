@@ -51,7 +51,7 @@ public class ArtemisTcpIT {
         Thread.sleep(10000);
 
         logger.info(environment.getContainerByServiceName("kafka-debug-consumer-1").get().getLogs());
-        // logger.info(environment.getContainerByServiceName("kafka-connect-1").get().getLogs());
+        logger.info(environment.getContainerByServiceName("kafka-connect-1").get().getLogs());
 
         var messages = client.poll();
 
