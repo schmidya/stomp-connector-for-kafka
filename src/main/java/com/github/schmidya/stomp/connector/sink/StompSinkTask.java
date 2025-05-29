@@ -66,7 +66,11 @@ public class StompSinkTask extends SinkTask {
 
     @Override
     public void stop() {
-
+        try {
+            client.close();
+        } catch (Exception e) {
+            log.error(e.getMessage());
+        }
     }
 
 }

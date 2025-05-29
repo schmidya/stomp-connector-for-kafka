@@ -5,6 +5,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.ArrayUtils;
+
 public abstract class StompServerFrame extends StompFrame {
 
     protected static final String CMD_CONNECTED = "CONNECTED";
@@ -32,11 +34,11 @@ public abstract class StompServerFrame extends StompFrame {
             if (headerLine.equals(""))
                 break;
             String[] splits = headerLine.split(":");
-            if (splits.length != 2) {
+            if (splits.length < 2) {
                 throw new IllegalArgumentException(
                         "Encounter malformed STOMP header: " + headerLine + "\nin the server frame:\n" + s);
             }
-            headers.put(splits[0], splits[1]);
+            headers.put(splits[0], String.join(":", ArrayUtils.subarray(splits, 1, splits.length)));
         }
 
         String body = "";

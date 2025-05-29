@@ -77,6 +77,10 @@ public class StompSourceTask extends SourceTask {
 
     @Override
     public void stop() {
-
+        try {
+            client.close();
+        } catch (Exception e) {
+            log.error(e.getMessage());
+        }
     }
 }

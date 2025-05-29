@@ -2,6 +2,8 @@ package com.github.schmidya.stomp.client.session;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -15,9 +17,11 @@ import com.github.schmidya.stomp.client.frames.StompServerFrame;
 
 import jakarta.websocket.ContainerProvider;
 
-public interface StompSession {
+public interface StompSession extends AutoCloseable {
 
     public StompServerFrameQueue getServerFrameQueue();
+
+    public boolean checkConnectionHealth();
 
     public void sendFrame(StompClientFrame frame) throws IOException;
 
@@ -36,19 +40,20 @@ public interface StompSession {
         int port = Integer.parseInt(matcher.group(3));
 
         StompServerFrameQueue Q = new StompServerFrameQueue();
+        BlockingQueue<StompClientFrame> sendBuffer = new LinkedBlockingQueue<StompClientFrame>();
 
         switch (protocol) {
             case "tcp":
                 return new TransportLayerSession(hostname, port, SocketFactory.getDefault(), new StompSocketListener(),
-                        Q);
+                        new StompSocketWriter(), Q, sendBuffer);
             case "ssl":
                 return new TransportLayerSession(hostname, port, SSLSocketFactory.getDefault(),
-                        new StompSocketListener(), Q);
+                        new StompSocketListener(), new StompSocketWriter(), Q, sendBuffer);
 
             case "ws":
             case "wss":
                 return new WebsocketSession(url, ContainerProvider.getWebSocketContainer(),
-                        new StompWebsocketListener(), Q);
+                        new StompWebsocketListener(), new StompWebsocketWriter(), Q, sendBuffer);
             default:
                 throw new MalformedURLException(); // Should actually be unreachable
         }

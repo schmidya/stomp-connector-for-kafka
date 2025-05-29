@@ -8,11 +8,14 @@ import static org.mockito.Mockito.when;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.util.concurrent.BlockingQueue;
+
 import javax.net.SocketFactory;
 
 import org.junit.jupiter.api.Test;
 
 import com.github.schmidya.stomp.client.StompServerFrameQueue;
+import com.github.schmidya.stomp.client.frames.StompClientFrame;
 import com.github.schmidya.stomp.client.frames.StompConnectFrame;
 import com.github.schmidya.stomp.client.frames.StompConnectedFrame;
 import com.github.schmidya.stomp.client.frames.StompServerFrame;
@@ -36,7 +39,9 @@ public class TransportLayerSessionTest {
 
         SocketFactory socketFactory = mock();
         StompSocketListener listener = mock();
+        StompSocketWriter writer = mock();
         StompServerFrameQueue serverFrameQueue = mock();
+        BlockingQueue<StompClientFrame> sendBuffer = mock();
         Socket socket = mock();
         InputStream is = mock();
         OutputStream os = mock();
@@ -46,12 +51,17 @@ public class TransportLayerSessionTest {
             when(socket.getOutputStream()).thenReturn(os);
             when(socket.getInputStream()).thenReturn(is);
             when(socketFactory.createSocket(hostname, port)).thenReturn(socket);
+            when(serverFrameQueue.waitForConnected()).thenReturn(StompServerFrame.fromString(
+                    "CONNECTED\n" +
+                            "version:1.2\n\n" + '\0'));
 
             TransportLayerSession session = new TransportLayerSession(
                     hostname, port,
                     socketFactory,
                     listener,
-                    serverFrameQueue);
+                    writer,
+                    serverFrameQueue,
+                    sendBuffer);
             session.connect(new StompConnectFrame(hostname, "login", "passcode"));
             verify(socketFactory).createSocket(hostname, port);
 

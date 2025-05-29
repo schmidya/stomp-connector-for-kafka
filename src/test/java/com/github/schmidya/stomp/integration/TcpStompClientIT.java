@@ -1,4 +1,4 @@
-package com.github.schmidya.stomp.client;
+package com.github.schmidya.stomp.integration;
 
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -11,14 +11,16 @@ import org.testcontainers.activemq.ArtemisContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
+
+import com.github.schmidya.stomp.client.StompClient;
 import com.github.schmidya.stomp.client.frames.StompConnectFrame;
 import com.github.schmidya.stomp.client.frames.StompConnectedFrame;
 import com.github.schmidya.stomp.client.frames.StompReceiptFrame;
 import com.github.schmidya.stomp.client.frames.StompServerFrame;
 
 @Testcontainers
-public class StompClientTest {
-        Logger logger = LoggerFactory.getLogger(StompClientTest.class);
+public class TcpStompClientIT {
+        Logger logger = LoggerFactory.getLogger(TcpStompClientIT.class);
 
         StompClient underTest;
 
@@ -53,7 +55,7 @@ public class StompClientTest {
 
                 underTest.sendMessage("{'hello' : 'world'}", "dest/echo");
 
-                Thread.sleep(100);
+                Thread.sleep(500);
 
                 var messages = underTest.poll();
 

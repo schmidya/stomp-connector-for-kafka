@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 
 import java.io.File;
+
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,7 +13,6 @@ import org.testcontainers.containers.ComposeContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
-
 import com.github.schmidya.stomp.client.StompClient;
 import com.github.schmidya.stomp.client.frames.StompConnectFrame;
 import com.github.schmidya.stomp.client.frames.StompConnectedFrame;
@@ -38,6 +39,7 @@ public class ArtemisTcpIT {
 
     @Test
     public void test() throws Exception {
+        environment.start();
         StompClient client = StompClient.fromUrl("tcp://" + environment.getServiceHost("broker-1", 61613) + ":"
                 + environment.getServicePort("broker-1", 61613));
         StompServerFrame frame = client.connect(new StompConnectFrame("artemis", "artemis", "artemis"));

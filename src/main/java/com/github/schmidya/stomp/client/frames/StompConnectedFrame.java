@@ -9,4 +9,24 @@ public class StompConnectedFrame extends StompServerFrame {
         // TODO Auto-generated constructor stub
     }
 
+    public int brokerHeartbeat() {
+        try {
+            var heartbeat = getHeader("heart-beat");
+            return Integer.parseInt(heartbeat.split(",")[0]);
+        } catch (Exception e) {
+
+        }
+        return 0;
+    }
+
+    public int clientHeartbeat() {
+        try {
+            var heartbeat = getHeader("heart-beat");
+            return Integer.parseInt(heartbeat.split(",")[1]);
+        } catch (Exception e) {
+
+        }
+        return 0;
+    }
+
 }
