@@ -11,7 +11,7 @@ This repository contains a pure Java implementation of a STOMP connector which c
 - [x] Core functionality: Connecting to Broker. Source connector subscribes to topic. Sink connector publishes to topic.
 - [x] Pure Java STOMP client with support for TCP and WebSocket connections.
 - [x] Heartbeating to monitor connection health (tested with [ToxiProxy](https://github.com/Shopify/toxiproxy))
-- [] Automatic reconnection for unhealthy connections
-- [] Exactly-once support via STOMP acknowledgements
-- [] Options to map STOMP message metadata/headers to Kafka event
-- [] Support for older versions of STOMP (currently only 1.2 is supported)
+- [ ] Automatic reconnection for unhealthy connections
+- [ ] Exactly-once support via STOMP acknowledgements
+- [ ] Options to map STOMP message metadata/headers to Kafka event
+- [ ] Support for older versions of STOMP (currently only 1.2 is supported)
